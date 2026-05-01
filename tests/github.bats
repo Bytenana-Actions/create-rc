@@ -8,7 +8,11 @@ setup() {
   cat > "$BATS_TEST_TMPDIR/bin/gh" << MOCK
 #!/usr/bin/env bash
 echo "gh \$*" >> $CALL_LOG
-echo "42"
+if [[ "\$*" == "issue create"* ]]; then
+  echo "https://github.com/owner/repo/issues/42"
+else
+  echo "42"
+fi
 MOCK
   chmod +x "$BATS_TEST_TMPDIR/bin/gh"
 
@@ -35,22 +39,22 @@ MOCK
 # create_issue
 
 @test "create_issue calls gh issue create" {
-  run create_issue "Release Candidate v1.2.0" "5"
+  run create_issue "Release Candidate v1.2.0"
   [[ "$(cat "$BATS_TEST_TMPDIR/calls")" == *"issue create"* ]]
 }
 
 @test "create_issue passes title" {
-  run create_issue "Release Candidate v1.2.0" "5"
+  run create_issue "Release Candidate v1.2.0"
   [[ "$(cat "$BATS_TEST_TMPDIR/calls")" == *"Release Candidate v1.2.0"* ]]
 }
 
-@test "create_issue links the milestone" {
-  run create_issue "Release Candidate v1.2.0" "5"
-  [[ "$(cat "$BATS_TEST_TMPDIR/calls")" == *"--milestone 5"* ]]
+@test "create_issue links the milestone by title" {
+  run create_issue "Release Candidate v1.2.0"
+  [[ "$(cat "$BATS_TEST_TMPDIR/calls")" == *"--milestone Release Candidate v1.2.0"* ]]
 }
 
 @test "create_issue returns the issue number" {
-  run create_issue "Release Candidate v1.2.0" "5"
+  run create_issue "Release Candidate v1.2.0"
   [ "$output" = "42" ]
 }
 

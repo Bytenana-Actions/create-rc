@@ -5,11 +5,14 @@ setup() {
   export PATH="$BATS_TEST_TMPDIR/bin:$PATH"
   CALL_LOG="$BATS_TEST_TMPDIR/calls"
 
-  # Default mock: simulates staged changes (diff --cached --quiet exits 1 = differences exist)
+  # Default mock: simulates CI (no git identity set, staged changes present)
   cat > "$BATS_TEST_TMPDIR/bin/git" << MOCK
 #!/usr/bin/env bash
 echo "git \$*" >> $CALL_LOG
 if [[ "\$*" == "diff --cached --quiet" ]]; then
+  exit 1
+fi
+if [[ "\$*" == "config user.name" || "\$*" == "config user.email" ]]; then
   exit 1
 fi
 MOCK
@@ -18,14 +21,34 @@ MOCK
   source "${BATS_TEST_DIRNAME}/../scripts/git.sh"
 }
 
-@test "configure_git sets user.name to github-actions[bot]" {
+@test "configure_git sets user.name when not configured" {
   run configure_git
   [[ "$(cat "$BATS_TEST_TMPDIR/calls")" == *"config user.name github-actions[bot]"* ]]
 }
 
-@test "configure_git sets user.email" {
+@test "configure_git sets user.email when not configured" {
   run configure_git
   [[ "$(cat "$BATS_TEST_TMPDIR/calls")" == *"config user.email github-actions[bot]@users.noreply.github.com"* ]]
+}
+
+@test "configure_git does not overwrite existing user.name" {
+  cat > "$BATS_TEST_TMPDIR/bin/git" << MOCK
+#!/usr/bin/env bash
+echo "git \$*" >> $CALL_LOG
+MOCK
+  chmod +x "$BATS_TEST_TMPDIR/bin/git"
+  run configure_git
+  [[ "$(cat "$BATS_TEST_TMPDIR/calls")" != *"config user.name github-actions[bot]"* ]]
+}
+
+@test "configure_git does not overwrite existing user.email" {
+  cat > "$BATS_TEST_TMPDIR/bin/git" << MOCK
+#!/usr/bin/env bash
+echo "git \$*" >> $CALL_LOG
+MOCK
+  chmod +x "$BATS_TEST_TMPDIR/bin/git"
+  run configure_git
+  [[ "$(cat "$BATS_TEST_TMPDIR/calls")" != *"config user.email github-actions[bot]@users.noreply.github.com"* ]]
 }
 
 @test "commit_and_push stages all tracked changes" {
