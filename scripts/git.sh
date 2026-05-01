@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 configure_git() {
-  git config user.name "github-actions[bot]"
-  git config user.email "github-actions[bot]@users.noreply.github.com"
+  git config user.name >/dev/null 2>&1 || git config user.name "github-actions[bot]"
+  git config user.email >/dev/null 2>&1 || git config user.email "github-actions[bot]@users.noreply.github.com"
 }
 
 commit_and_push() {
