@@ -1,0 +1,48 @@
+name: Release
+
+on:
+  push:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install convco
+        run: |
+          curl -sL https://github.com/convco/convco/releases/latest/download/convco-x86_64-unknown-linux-musl.tar.gz \
+            | tar xz -C /usr/local/bin
+          chmod +x /usr/local/bin/convco
+
+      - name: Compute next version
+        id: version
+        run: |
+          CURRENT=$(convco version 2>/dev/null || echo "0.0.0")
+          NEXT=$(convco version --bump 2>/dev/null || echo "")
+          if [ -z "$NEXT" ] || [ "$CURRENT" = "$NEXT" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            MAJOR=$(echo "$NEXT" | cut -d. -f1)
+            echo "skip=false"  >> "$GITHUB_OUTPUT"
+            echo "next=$NEXT"  >> "$GITHUB_OUTPUT"
+            echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Tag and push
+        if: steps.version.outputs.skip == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git tag -a "v${{ steps.version.outputs.next }}" -m "v${{ steps.version.outputs.next }}"
+          git tag -fa "v${{ steps.version.outputs.major }}" -m "v${{ steps.version.outputs.major }}"
+
+          git push origin "v${{ steps.version.outputs.next }}"
+          git push origin "v${{ steps.version.outputs.major }}" --force

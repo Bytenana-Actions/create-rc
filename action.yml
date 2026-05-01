@@ -1,5 +1,6 @@
 name: Create Release Candidate
 description: Creates milestone, issue, rc branch and PR for a target release version
+author: Bytenana-Actions
 
 inputs:
   version:
@@ -23,76 +24,11 @@ branding:
 runs:
   using: composite
   steps:
-    - name: Configure git
-      shell: bash
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-
-    - name: Compute versions and branch name
-      shell: bash
-      run: |
-        STABLE="${{ inputs.version }}"
-        STABLE="${STABLE#v}"
-        echo "STABLE=${STABLE}" >> "$GITHUB_ENV"
-        echo "RC_VERSION=${STABLE}-rc.1" >> "$GITHUB_ENV"
-        echo "BRANCH=rc-${STABLE}" >> "$GITHUB_ENV"
-        echo "RC_TITLE=Release Candidate v${STABLE}" >> "$GITHUB_ENV"
-
-    - name: Create milestone
+    - name: Create Release Candidate
       shell: bash
       env:
         GH_TOKEN: ${{ inputs.token }}
-      run: |
-        MILESTONE_NUMBER=$(gh api repos/{owner}/{repo}/milestones \
-          --method POST \
-          --field title="${RC_TITLE}" \
-          --jq '.number')
-        echo "MILESTONE_NUMBER=${MILESTONE_NUMBER}" >> "$GITHUB_ENV"
-
-    - name: Create issue
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.token }}
-      run: |
-        ISSUE_NUMBER=$(gh issue create \
-          --title "${RC_TITLE}" \
-          --body "Tracking issue for ${RC_TITLE}." \
-          --milestone "${MILESTONE_NUMBER}" \
-          --json number \
-          --jq '.number')
-        echo "ISSUE_NUMBER=${ISSUE_NUMBER}" >> "$GITHUB_ENV"
-
-    - name: Create branch linked to issue
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.token }}
-      run: |
-        gh issue develop "${ISSUE_NUMBER}" \
-          --base "${{ inputs.base-branch }}" \
-          --name "${BRANCH}" \
-          --checkout
-
-    - name: Bump version
-      shell: bash
-      env:
-        VERSION: ${{ env.RC_VERSION }}
-      run: ${{ inputs.bump-command }}
-
-    - name: Commit and push
-      shell: bash
-      run: |
-        git add -u
-        git commit -m "chore: bump version to ${RC_VERSION}"
-        git push origin "${BRANCH}"
-
-    - name: Open PR
-      shell: bash
-      env:
-        GH_TOKEN: ${{ inputs.token }}
-      run: |
-        gh pr create \
-          --title "${RC_TITLE}" \
-          --body "Closes #${ISSUE_NUMBER}" \
-          --base "${{ inputs.base-branch }}" \
-          --head "${BRANCH}"
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_BUMP_COMMAND: ${{ inputs.bump-command }}
+        INPUT_BASE_BRANCH: ${{ inputs.base-branch }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/run.sh"

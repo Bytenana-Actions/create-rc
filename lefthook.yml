@@ -1,0 +1,11 @@
+commit-msg:
+  commands:
+    convco:
+      run: convco check {1}
+
+pre-push:
+  commands:
+    actionlint:
+      run: actionlint
+    tests:
+      run: bats tests/
