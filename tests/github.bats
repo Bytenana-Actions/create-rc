@@ -8,7 +8,11 @@ setup() {
   cat > "$BATS_TEST_TMPDIR/bin/gh" << MOCK
 #!/usr/bin/env bash
 echo "gh \$*" >> $CALL_LOG
-echo "42"
+if [[ "\$*" == "issue create"* ]]; then
+  echo "https://github.com/owner/repo/issues/42"
+else
+  echo "42"
+fi
 MOCK
   chmod +x "$BATS_TEST_TMPDIR/bin/gh"
 
