@@ -16,11 +16,7 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install convco
-        run: |
-          curl -sL https://github.com/convco/convco/releases/latest/download/convco-x86_64-unknown-linux-musl.tar.gz \
-            | tar xz -C /usr/local/bin
-          chmod +x /usr/local/bin/convco
+      - uses: convco/convco-action@v0.2.0
 
       - name: Compute next version
         id: version
