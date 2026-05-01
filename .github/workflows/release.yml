@@ -30,9 +30,11 @@ jobs:
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             MAJOR=$(echo "$NEXT" | cut -d. -f1)
-            echo "skip=false"  >> "$GITHUB_OUTPUT"
-            echo "next=$NEXT"  >> "$GITHUB_OUTPUT"
-            echo "major=$MAJOR" >> "$GITHUB_OUTPUT"
+            {
+              echo "skip=false"
+              echo "next=$NEXT"
+              echo "major=$MAJOR"
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Tag and push
