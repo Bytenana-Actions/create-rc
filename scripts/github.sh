@@ -10,12 +10,11 @@ create_milestone() {
 
 create_issue() {
   local title="$1"
-  local milestone="$2"
   local url
   url=$(gh issue create \
     --title "$title" \
     --body "Tracking issue for ${title}." \
-    --milestone "$milestone")
+    --milestone "$title")
   echo "${url##*/}"
 }
 

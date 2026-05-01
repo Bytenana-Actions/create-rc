@@ -29,7 +29,7 @@ echo "::endgroup::"
 
 # ── Issue ────────────────────────────────────────────────────────────────────
 echo "::group::Create issue"
-ISSUE_NUMBER=$(create_issue "${RC_TITLE}" "${MILESTONE_NUMBER}")
+ISSUE_NUMBER=$(create_issue "${RC_TITLE}")
 echo "  created issue #${ISSUE_NUMBER}: ${RC_TITLE}"
 echo "::endgroup::"
 
