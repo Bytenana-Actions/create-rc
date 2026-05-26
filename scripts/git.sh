@@ -10,6 +10,10 @@ commit_and_push() {
   local branch="$2"
   git add -u
   if git diff --cached --quiet; then
+    if git ls-remote --exit-code origin "$branch" > /dev/null 2>&1; then
+      echo "Nothing to commit — branch ${branch} already at expected version."
+      return 0
+    fi
     echo "::error::bump-command ran but no tracked files were modified." \
          "The file your bump-command writes to must already exist and be committed in this repository." \
          "See https://github.com/Bytenana-Actions/create-rc/blob/master/docs/create-rc.md for examples."

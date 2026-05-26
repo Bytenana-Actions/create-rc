@@ -66,8 +66,24 @@ MOCK
   [[ "$(cat "$BATS_TEST_TMPDIR/calls")" == *"push origin rc-1.2.0"* ]]
 }
 
-@test "commit_and_push fails when bump-command modified no tracked files" {
-  # override mock: diff --cached --quiet exits 0 = nothing staged
+@test "commit_and_push fails when bump-command modified no tracked files and branch is new" {
+  # nothing staged + branch does not exist on remote = first-run misconfiguration
+  cat > "$BATS_TEST_TMPDIR/bin/git" << MOCK
+#!/usr/bin/env bash
+echo "git \$*" >> $CALL_LOG
+if [[ "\$*" == "ls-remote --exit-code origin"* ]]; then
+  exit 2
+fi
+MOCK
+  chmod +x "$BATS_TEST_TMPDIR/bin/git"
+
+  run commit_and_push "chore: bump version to 1.2.0-rc.1" "rc-1.2.0"
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"no tracked files were modified"* ]]
+}
+
+@test "commit_and_push succeeds without committing when branch already on remote" {
+  # nothing staged + branch already on remote = idempotent re-run
   cat > "$BATS_TEST_TMPDIR/bin/git" << MOCK
 #!/usr/bin/env bash
 echo "git \$*" >> $CALL_LOG
@@ -75,6 +91,7 @@ MOCK
   chmod +x "$BATS_TEST_TMPDIR/bin/git"
 
   run commit_and_push "chore: bump version to 1.2.0-rc.1" "rc-1.2.0"
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"no tracked files were modified"* ]]
+  [ "$status" -eq 0 ]
+  [[ "$(cat "$BATS_TEST_TMPDIR/calls")" != *"commit -m"* ]]
+  [[ "$(cat "$BATS_TEST_TMPDIR/calls")" != *"push origin"* ]]
 }
