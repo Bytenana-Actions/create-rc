@@ -45,7 +45,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
-      - uses: Bytenana-Actions/create-rc@v1
+      - uses: Bytenana-Actions/create-rc@v0.1.0
         with:
           version: ${{ inputs.version }}
           bump-command: bump-my-version bump --new-version $VERSION --no-commit
